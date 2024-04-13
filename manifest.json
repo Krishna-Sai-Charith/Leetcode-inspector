@@ -1,0 +1,28 @@
+{
+  "manifest_version": 3,
+  "name": "Leetcode Inspector",
+  "version": "1.0",
+  "description": "Maintains the legitimacy of the coding process on the Leetcode platform.",
+  "action": {
+    "default_icon": "inspector.png",
+    "default_popup":"popup.html"
+  },
+  "host_permissions": [
+    "http://*/*",
+    "https://*/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["*://*.leetcode.com/*"],
+      "js": ["content_script.js"],
+      "css": ["styles.css"]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["modal.html"],
+      "matches": ["*://*.leetcode.com/*"]
+    }
+  ],
+  "permissions": ["activeTab","scripting","tabs"]
+}
