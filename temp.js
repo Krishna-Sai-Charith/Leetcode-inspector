@@ -1,12 +1,38 @@
-function preventPaste(event) {
-  // Check if Ctrl+V or Shift+Insert is pressed
-  if ((event.ctrlKey && event.key === 'v') || (event.shiftKey && event.key === 'Insert')) {
-    event.preventDefault();
-    event.stopPropagation();
-    showModal();
+let extensionEnabled = true; // Initial state
+
+// Toggle the extension on or off
+function toggleExtension() {
+  extensionEnabled = !extensionEnabled;
+  chrome.storage.local.set({ extensionEnabled: extensionEnabled });
+
+  const btn = document.getElementById('turn-off');
+  const inspectorText = document.getElementById('inspector-text');
+  
+  if (extensionEnabled) {
+    btn.textContent = 'Turn off';
+    inspectorText.textContent = 'Inspector is watching you 👀';
+    enablePastePrevention(); // Enable paste prevention when the extension is on
+  } else {
+    btn.textContent = 'Turn on';
+    inspectorText.textContent = 'Extension deactivated';
+    disablePastePrevention(); // Disable paste prevention when the extension is off
   }
 }
 
+// Function to prevent paste operation and show modal
+function preventPaste(event) {
+  const isPasteShortcut = (event.ctrlKey && event.code === 'KeyV') || (event.shiftKey && event.code === 'Insert');
+  const isRightClick = event.type === 'contextmenu';
+  
+  if (extensionEnabled && (isPasteShortcut || isRightClick)) {
+    event.preventDefault();  // Prevent the default action (pasting or context menu)
+    event.stopPropagation(); // Stop the event from propagating further
+
+    showModal(); // Show the modal when the extension is enabled
+  }
+}
+
+// Function to display the modal
 function showModal() {
   const modalContainer = document.createElement('div');
   modalContainer.innerHTML = `
@@ -30,16 +56,17 @@ function showModal() {
           }
           .cha-content {
             background-color: #f1f2f2;
-            margin: 300px auto;
+            margin: 5% auto;
             border-radius: 8px;
             color: #424242;
             font-family: "Mulish", sans-serif;
             padding: 30px;
-            width: 25%;
+            width: 90%;
+            max-width: 600px;
           }
-          @media screen and (max-width: 900px) {
+          @media screen and (max-width: 600px) {
             .cha-content {
-              width: 25%;
+              width: 90%;
             }
           }
           .close {
@@ -54,22 +81,47 @@ function showModal() {
             text-decoration: none;
             cursor: pointer;
           }
-          h1{
-            margin-bottom:10px;
-            color:black;
-            font-weight:bold;
-            font-size:1.25rem;
+          h1 {
+            margin-bottom: 10px;
+            color: black;
+            font-weight: bold;
+            font-size: 1.25rem;
           }
         </style>
       </div>
-    </div>
-  `;
+    </div>`
+  ;
+  
   document.body.appendChild(modalContainer);
+
+  // Add event listener to close the modal
   const closeButton = document.querySelector('.close');
-  const modal = document.querySelector('.cha-div');
   closeButton.addEventListener('click', function () {
-    modal.remove();
+    modalContainer.remove();
   });
 }
 
-document.addEventListener('keydown', preventPaste, true);
+// Enable paste prevention
+function enablePastePrevention() {
+  document.addEventListener('keydown', preventPaste, true);
+  document.addEventListener('contextmenu', preventPaste, true);
+}
+
+// Disable paste prevention
+function disablePastePrevention() {
+  document.removeEventListener('keydown', preventPaste, true);
+  document.removeEventListener('contextmenu', preventPaste, true);
+}
+
+// Initial state check
+if (extensionEnabled) {
+  enablePastePrevention();
+} else {
+  disablePastePrevention();
+}
+
+// Add event listener to the toggle button
+const btn = document.getElementById('turn-off');
+if (btn) {
+  btn.addEventListener('click', toggleExtension);
+}
